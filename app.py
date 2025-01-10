@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template_string, request, jsonify
 import requests
 import pandas as pd
 import os
 
 # Initialize Flask app with template folder explicitly set
-app = Flask(__name__, template_folder='public')
+app = Flask(__name__)
 
 # Debug: Print the current working directory
 print("Working directory:", os.getcwd())
@@ -63,11 +63,275 @@ def extract_nutritional_data(products_data):
 # Flask Routes
 @app.route('/')
 def home():
-    try:
-        return render_template('index.html')
-    except Exception as e:
-        print(f"Error rendering template: {e}")
-        return "Template not found. Ensure the 'templates/index.html' file exists.", 500
+    template = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>OpenFoodFacts Viewer</title>
+        <style>
+            body { font-family: Bookman Old Style, sans-serif; margin: 11px; background-color: #f9f9f9; }
+            input, button { margin: 5px; padding: 10px; font-size: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 11px; background-color: white; }
+            table, th, td { border: 1px solid #ccc; }
+            th, td { padding: 10px; text-align: left; }
+            th { background-color: #f4f4f4; font-weight: bold; }
+            .calculator { margin-top: 11px; padding: 10px; background-color: #e6f7ff; border-radius: 5px; }
+            .calculator label, .calculator input { margin-right: 10px; }
+            .calculator div { display: inline-block; margin-right: 15px; }
+            .status { color: red; margin: 10px 0; }
+            .nutrition-results { margin-top: 11px; background-color: #e7ffe7; padding: 8px; border-radius: 5px; }
+        </style>
+    </head>
+    <body>
+        <h1>NUTRITIONAL VALUE😊</h1>
+
+        <!-- Filters for Data -->
+        <div>
+            <label for="page">Page:</label>
+            <input type="number" id="page" value="1" min="1">
+
+            <label for="limit">Limit:</label>
+            <input type="number" id="limit" value="10" min="1">
+
+            <label for="category">Category:</label>
+            <input type="text" id="category" placeholder="e.g., Beverages">
+
+            <label for="brand">Brand:</label>
+            <input type="text" id="brand" placeholder="e.g., Coca Cola">
+
+            <label for="product_name">Product Name:</label>
+            <input type="text" id="product_name" placeholder="e.g., Diet Coke">
+
+            <button onclick="fetchData()">Fetch Data</button>
+        </div>
+
+        <!-- Status Message -->
+        <div id="status" class="status"></div>
+
+        <!-- Nutrition Calculator -->
+        <div class="calculator">
+            <div>
+                <label for="products">Select Products (comma separated):</label>
+                <input type="text" id="products" placeholder="e.g., Coca-Cola, Nutella">
+            </div>
+
+            <div>
+                <label for="quantities">Quantities (comma separated, e.g., ml or g):</label>
+                <input type="text" id="quantities" placeholder="e.g., 100ml, 50g">
+            </div>
+
+            <div>
+                <button onclick="calculateNutrition()">Calculate Nutrition</button>
+            </div>
+
+            <div id="calculated-nutrition" class="nutrition-results" style="display:none;">
+                <table id="calculated-nutrition-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Energy (kcal)</th>
+                            <th>Fat (g)</th>
+                            <th>Carbohydrates (g)</th>
+                            <th>Sugars (g)</th>
+                            <th>Proteins (g)</th>
+                            <th>Salt (g)</th>
+                            <th>Fiber (g)</th>
+                            <th>Vitamin A (µg)</th>
+                            <th>Vitamin C (mg)</th>
+                            <th>Calcium (mg)</th>
+                            <th>Iron (mg)</th>
+                            <th>Magnesium (mg)</th>
+                            <th>Potassium (mg)</th>
+                            <th>Sodium (mg)</th>
+                            <th>Zinc (mg)</th>
+                            <th>Phosphorus (mg)</th>
+                            <th>Vitamin D (µg)</th>
+                            <th>Vitamin E (mg)</th>
+                            <th>Vitamin K (µg)</th>
+                            <th>Folate (µg)</th>
+                            <th>Vitamin B12 (µg)</th>
+                            <th>Vitamin B6 (mg)</th>
+                            <th>Copper (mg)</th>
+                            <th>Manganese (mg)</th>
+                            <th>Selenium (µg)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Calculated nutrition data will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Brand</th>
+                    <th>Ingredients</th>
+                    <th>Quantity</th>
+                    <th>Code</th>
+                    <th>Energy (kcal/100g)</th>
+                    <th>Fat (g/100g)</th>
+                    <th>Carbohydrates (g/100g)</th>
+                    <th>Sugars (g/100g)</th>
+                    <th>Proteins (g/100g)</th>
+                    <th>Salt (g/100g)</th>
+                    <th>Fiber (g/100g)</th>
+                    <th>Vitamin A (µg/100g)</th>
+                    <th>Vitamin C (mg/100g)</th>
+                    <th>Calcium (mg/100g)</th>
+                    <th>Iron (mg/100g)</th>
+                    <th>Magnesium (mg/100g)</th>
+                    <th>Potassium (mg/100g)</th>
+                    <th>Sodium (mg/100g)</th>
+                    <th>Zinc (mg/100g)</th>
+                    <th>Phosphorus (mg/100g)</th>
+                    <th>Vitamin D (µg/100g)</th>
+                    <th>Vitamin E (mg/100g)</th>
+                    <th>Vitamin K (µg/100g)</th>
+                    <th>Folate (µg/100g)</th>
+                    <th>Vitamin B12 (µg/100g)</th>
+                    <th>Vitamin B6 (mg/100g)</th>
+                    <th>Copper (mg/100g)</th>
+                    <th>Manganese (mg/100g)</th>
+                    <th>Selenium (µg/100g)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be injected here -->
+            </tbody>
+        </table>
+
+        <script>
+            let productData = [];  // Store product data
+
+            async function fetchData() {
+                const page = document.getElementById('page').value;
+                const limit = document.getElementById('limit').value;
+                const category = document.getElementById('category').value;
+                const brand = document.getElementById('brand').value;
+                const product_name = document.getElementById('product_name').value;
+                const statusDiv = document.getElementById('status');
+                const tableBody = document.getElementById('data-table').querySelector('tbody');
+
+                statusDiv.textContent = '';
+                tableBody.innerHTML = '';
+
+                try {
+                    const response = await fetch('/fetch_data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            page,
+                            limit,
+                            category,
+                            brand,
+                            product_name
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        productData = data.data;
+
+                        productData.forEach(product => {
+                            const row = document.createElement('tr');
+                            Object.values(product).forEach(value => {
+                                const cell = document.createElement('td');
+                                cell.textContent = value;
+                                row.appendChild(cell);
+                            });
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        statusDiv.textContent = data.message;
+                    }
+                } catch (error) {
+                    statusDiv.textContent = 'Error fetching data.';
+                    console.error('Error:', error);
+                }
+            }
+
+            // Function to calculate nutrition
+            function calculateNutrition() {
+                const products = document.getElementById('products').value.split(',');
+                const quantities = document.getElementById('quantities').value.split(',');
+
+                const resultsDiv = document.getElementById('calculated-nutrition');
+                const resultsTable = document.getElementById('calculated-nutrition-table');
+                const resultsTableBody = resultsTable.querySelector('tbody');
+                resultsDiv.style.display = 'none';
+                resultsTableBody.innerHTML = '';  // Clear previous results
+
+                if (products.length !== quantities.length) {
+                    resultsDiv.textContent = 'The number of products must match the number of quantities.';
+                    resultsDiv.style.display = 'block';
+                    return;
+                }
+
+                let totalNutrients = {};
+
+                products.forEach((product, index) => {
+                    const productInfo = productData.find(p => p.product_name.toLowerCase().includes(product.trim().toLowerCase()));
+                    if (productInfo) {
+                        const quantity = parseFloat(quantities[index].trim());  // Assuming quantity is in grams
+                        const calculatedData = {};
+
+                        // Calculate the nutritional values based on quantities
+                        for (const [key, value] of Object.entries(productInfo)) {
+                            if (key.includes('100g')) {
+                                const nutritionalValue = value * (quantity / 100);
+                                calculatedData[key] = nutritionalValue.toFixed(2);
+
+                                // Sum up the nutritional values
+                                if (totalNutrients[key]) {
+                                    totalNutrients[key] += nutritionalValue;
+                                } else {
+                                    totalNutrients[key] = nutritionalValue;
+                                }
+                            }
+                        }
+
+                        // Display calculated data in table row
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${product.trim()}</td>
+                            <td>${quantity}</td>
+                            ${Object.entries(calculatedData).map(([key, value]) => `<td>${value}</td>`).join('')}
+                        `;
+                        resultsTableBody.appendChild(row);
+                    } else {
+                        const p = document.createElement('p');
+                        p.textContent = `No data found for product: ${product.trim()}`;
+                        resultsDiv.appendChild(p);
+                    }
+                });
+
+                // Display total sum of nutrients in table row
+                const totalRow = document.createElement('tr');
+                totalRow.innerHTML = `
+                    <td><strong>Total</strong></td>
+                    <td></td>
+                    ${Object.entries(totalNutrients).map(([key, value]) => `<td>${value.toFixed(2)}</td>`).join('')}
+                `;
+                resultsTableBody.appendChild(totalRow);
+
+                // Show results table
+                resultsDiv.style.display = 'block';
+                resultsTable.style.display = 'table';
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return render_template_string(template)
 
 @app.route('/fetch_data', methods=['POST'])
 def fetch_data():
