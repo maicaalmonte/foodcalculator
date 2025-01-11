@@ -75,7 +75,7 @@ def home():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FoodCalculatour</title>
        <p><br>Source: <a href="https://world.openfoodfacts.org/">https://world.openfoodfacts.org/</a><br></p>
-        <p><strong>Disclaimer:</strong> The nutritional information provided by this script is sourced from OpenFoodFacts and may not be complete or fully accurate for every product. Some products may not have specific details available, such as calorie counts, due to incomplete data in the database. In cases where nutritional values are missing or not available, default values may be displayed. Always refer to the packaging of the product or the manufacturer's information for the most accurate and up-to-date nutritional details.</p>
+        <p><strong>Disclaimer:</strong> The nutritional information provided by this website is sourced from OpenFoodFacts and may not be complete or fully accurate for every product. Some products may not have specific details available, such as calorie counts, due to incomplete data in the database. In cases where nutritional values are missing or not available, default values may be displayed. Always refer to the packaging of the product or the manufacturer's information for the most accurate and up-to-date nutritional details.</p>
         <style>
             body { font-family: Bookman Old Style, sans-serif; margin: 11px; background-color: #d6cce6; }
             input, button { margin: 5px; padding: 10px; font-size: 10px; }
