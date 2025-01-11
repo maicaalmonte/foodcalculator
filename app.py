@@ -10,19 +10,23 @@ app = Flask(__name__)
 print("Working directory:", os.getcwd())
 
 # Function to fetch data from OpenFoodFacts API
-def fetch_all_food_data(limit=100000, page=1):
+def fetch_all_food_data(pages=1, limit_per_page=100):
     """
     Fetches product data from OpenFoodFacts API
     """
-    url = f"https://world.openfoodfacts.org/cgi/search.pl?search_terms=&search_simple=1&action=process&json=true&page={page}&page_size={limit}"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an error for bad status codes
-        data = response.json()
-        return data.get('products', [])
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
-        return []
+    all_products = []
+    for page in range(1, pages + 1):
+        url = f"https://world.openfoodfacts.org/cgi/search.pl?search_terms=&search_simple=1&action=process&json=true&page={page}&page_size={limit_per_page}"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an error for bad status codes
+            data = response.json()
+            products = data.get('products', [])
+            all_products.extend(products)
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching data: {e}")
+            break
+    return all_products
 
 # Function to extract relevant data (nutritional values and other attributes)
 def extract_nutritional_data(products_data):
@@ -69,11 +73,12 @@ def home():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>OpenFoodFacts Viewer</title>
+        <title>FoodCalculatour</title>
+        <br> Source: https://world.openfoodfacts.org/<br>
         <style>
-            body { font-family: Bookman Old Style, sans-serif; margin: 11px; background-color: #f9f9f9; }
+            body { font-family: Bookman Old Style, sans-serif; margin: 11px; background-color: #d6cce6; }
             input, button { margin: 5px; padding: 10px; font-size: 10px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 11px; background-color: white; }
+            table { width: 100%; border-collapse: collapse; margin-top: 11px; background-color: #dbf3bb; }
             table, th, td { border: 1px solid #ccc; }
             th, td { padding: 10px; text-align: left; }
             th { background-color: #f4f4f4; font-weight: bold; }
@@ -86,13 +91,15 @@ def home():
     </head>
     <body>
         <h1>NUTRITIONAL VALUE😊</h1>
+        <img src="/static/img/cute gif.gif" alt="First GIF" style="display: inline-block; margin-right: 10px;">
+        <img src="/static/img/cute gif.gif" alt="Second GIF" style="display: inline-block;">
 
         <!-- Filters for Data -->
         <div>
-            <label for="page">Page:</label>
-            <input type="number" id="page" value="1" min="1">
+            <label for="pages">Pages:</label>
+            <input type="number" id="pages" value="1" min="1">
 
-            <label for="limit">Limit:</label>
+            <label for="limit">Limit per Page:</label>
             <input type="number" id="limit" value="10" min="1">
 
             <label for="category">Category:</label>
@@ -211,7 +218,7 @@ def home():
             let productData = [];  // Store product data
 
             async function fetchData() {
-                const page = document.getElementById('page').value;
+                const pages = document.getElementById('pages').value;
                 const limit = document.getElementById('limit').value;
                 const category = document.getElementById('category').value;
                 const brand = document.getElementById('brand').value;
@@ -229,7 +236,7 @@ def home():
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            page,
+                            pages,
                             limit,
                             category,
                             brand,
@@ -337,17 +344,17 @@ def home():
 def fetch_data():
     try:
         # Validate inputs
-        page = int(request.json.get('page', 1))
+        pages = int(request.json.get('pages', 1))
         limit = int(request.json.get('limit', 100))
         category = request.json.get('category', '')
         brand = request.json.get('brand', '')
         product_name = request.json.get('product_name', '')
 
-        if page < 1 or limit < 1:
-            return jsonify({'status': 'error', 'message': 'Page and limit must be positive integers.'}), 400
+        if pages < 1 or limit < 1:
+            return jsonify({'status': 'error', 'message': 'Pages and limit must be positive integers.'}), 400
 
         # Fetch data from the OpenFoodFacts API
-        products_data = fetch_all_food_data(limit=limit, page=page)
+        products_data = fetch_all_food_data(pages=pages, limit_per_page=limit)
 
         if not products_data:
             return jsonify({'status': 'error', 'message': 'No products were fetched. Please try again.'})
