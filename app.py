@@ -75,12 +75,24 @@ def home():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FoodCalculatour</title>
        <p><br>Source: <a href="https://world.openfoodfacts.org/">https://world.openfoodfacts.org/</a><br></p>
-        <p><strong>Disclaimer:</strong> The nutritional information provided by this website is sourced from OpenFoodFacts and may not be complete or fully accurate for every product. Some products may not have specific details available, such as calorie counts, due to incomplete data in the database. In cases where nutritional values are missing or not available, default values may be displayed. Always refer to the packaging of the product or the manufacturer's information for the most accurate and up-to-date nutritional details.</p>
+      <div class="disclaimer-box">
+    <strong>Disclaimer:</strong> The nutritional information provided by this website is sourced from OpenFoodFacts and may not be complete or fully accurate for every product. Some products may not have specific details available, such as calorie counts, due to incomplete data in the database. In cases where nutritional values are missing or not available, default values may be displayed. Always refer to the packaging of the product or the manufacturer's information for the most accurate and up-to-date nutritional details.
+</div>
         <style>
+    .disclaimer-box {
+        font-size: 12px; /* Adjust font size as needed */
+        background-color: white; /* White background */
+        border: 1px solid #ccc; /* Optional: Add a border for better visibility */
+        padding: 10px; /* Add padding for spacing */
+        border-radius: 5px; /* Optional: Round corners */
+        margin-top: 20px; /* Add margin to separate it from other content */
+        color: #333; /* Text color for readability */
+    }
+
             body { font-family: Bookman Old Style, sans-serif; margin: 11px; background-color: #d6cce6; }
             input, button { margin: 5px; padding: 10px; font-size: 10px; }
             table { width: 100%; border-collapse: collapse; margin-top: 11px; background-color: #dbf3bb; }
-            table, th, td { border: 1px solid #ccc; }
+            table, th, td { border: 1px solid #ccc; font-size: 8px; }
             th, td { padding: 10px; text-align: left; }
             th { background-color: #f4f4f4; font-weight: bold; }
             .calculator { margin-top: 11px; padding: 10px; background-color: #e6f7ff; border-radius: 5px; }
@@ -88,13 +100,17 @@ def home():
             .calculator div { display: inline-block; margin-right: 15px; }
             .status { color: red; margin: 10px 0; }
             .nutrition-results { margin-top: 11px; background-color: #e7ffe7; padding: 8px; border-radius: 5px; }
+               
+        
         </style>
     </head>
     <body>
         <h1>NUTRITIONAL VALUE😊</h1>
         <img src="/static/img/cute gif.gif" alt="First GIF" style="display: inline-block; margin-right: 10px;">
         <img src="/static/img/cute gif.gif" alt="Second GIF" style="display: inline-block;">
-
+        
+        
+        
         <!-- Filters for Data -->
         <div>
             <label for="pages">Pages:</label>
